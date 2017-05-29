@@ -114,6 +114,28 @@ REQUESTEDAUTHN;
             }
         }
 
+        $scopingStr = '';
+         if (isset($idpData['scoping'])) {
+             $proxyCount = isset($idpData['scoping']['proxyCount']) ? ' ProxyCount="' . $idpData['scoping']['proxyCount'] . '"' : '';
+             $requesterId = isset($idpData['scoping']['requesterId']) ? '<samlp:RequesterID>' . $idpData['scoping']['requesterId'] . '</samlp:RequesterID>' : '';
+
+             $idpList = '';
+             if (isset($idpData['scoping']['idpList'])) {
+                 $idpList = '<samlp:IDPList>';
+                 foreach ($idpData['scoping']['idpList'] as $idpListItem) {
+                     $idpList .= '<samlp:IDPEntry ProviderID="'.$idpListItem['providerId'].'" Name="'.$idpListItem['name'].'" />';
+                 }
+                 $idpList .= '</samlp:IDPList>';
+             }
+
+             $scopingStr = <<<SCOPING
+    <samlp:Scoping$proxyCount>
+        {$idpList}
+        {$requesterId}
+    </samlp:Scoping>
+SCOPING;
+        }
+
         $sp_entity_id = htmlspecialchars($spData['entityId'], ENT_QUOTES);
         $acs_url = htmlspecialchars($spData['assertionConsumerService']['url'], ENT_QUOTES);
         $request = <<<AUTHNREQUEST
@@ -130,6 +152,7 @@ REQUESTEDAUTHN;
     <saml:Issuer>{$sp_entity_id}</saml:Issuer>
 {$nameIdPolicyStr}
 {$requestedAuthnStr}
+{$scopingStr}
 </samlp:AuthnRequest>
 AUTHNREQUEST;
 
